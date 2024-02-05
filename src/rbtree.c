@@ -21,11 +21,12 @@ rbtree *new_rbtree(void)
 
 void postorder(node_t *p, rbtree *t)
 {
+	
     if (p != t->nil)
     {
         postorder(p->left, t);
         postorder(p->right, t);
-        free(p);
+		free(p);
     }
 }
 
@@ -34,6 +35,7 @@ void delete_rbtree(rbtree *t)
     // TODO: reclaim the tree nodes's memory
     node_t *x = t->root;
     postorder(x, t);
+	free(t->nil);
     free(t);
 }
 
@@ -154,7 +156,6 @@ node_t *rbtree_find(const rbtree *t, const key_t key)
         }
     }
 
-    // TODO: implement find
     return x; // x값 반환
 }
 
@@ -234,11 +235,12 @@ int rbtree_erase(rbtree *t, node_t *p)
         y->left = p->left;
         y->left->parent = y;
         y->color = p->color;
-        free(p);
     }
-    if (y_ori_color == RBTREE_BLACK)
+    if (y_ori_color == RBTREE_BLACK){
         rbtree_erase_fixup(t, x);
+	}
 
+	free(p);
     return 0;
 }
 
