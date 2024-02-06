@@ -26,6 +26,7 @@ void postorder(node_t *p, rbtree *t)
         postorder(p->left, t);
         postorder(p->right, t);
         free(p);
+        p = NULL;
     }
 }
 
@@ -39,11 +40,17 @@ void delete_rbtree(rbtree *t)
     }
     free(t->nil);
     free(t);
+    t = NULL;
 }
 
 node_t *rbtree_insert(rbtree *t, const key_t key)
 {
     node_t *new = (node_t *)malloc(sizeof(node_t));
+    if (new == NULL)
+    {
+        free(new);
+        return NULL;
+    }
     node_t *y = t->nil;
     node_t *x = t->root;
     new->key = key;
@@ -71,7 +78,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
     new->color = RBTREE_RED;
 
     rbtree_insert_fixup(t, new); // 새로운 삽입으로 규칙 위반일 수 있으니 확인
-
+    new = NULL;
     return t->root; // root가 바뀌었을 수 있으니 루트 반환
 }
 
@@ -123,7 +130,6 @@ void rbtree_insert_fixup(rbtree *t, node_t *z)
             left_rotate(t, z->parent->parent);
         }
     }
-
     t->root->color = RBTREE_BLACK;
 }
 
@@ -238,11 +244,11 @@ int rbtree_erase(rbtree *t, node_t *p)
         y->left = p->left;
         y->left->parent = y;
         y->color = p->color;
-        free(p);
     }
     if (y_ori_color == RBTREE_BLACK)
         rbtree_erase_fixup(t, x);
 
+    free(p);
     return 0;
 }
 
@@ -319,6 +325,7 @@ void rbtree_erase_fixup(rbtree *t, node_t *x)
         }
     }
     x->color = RBTREE_BLACK;
+    w = NULL;
 }
 
 node_t *rbtree_transplant(rbtree *t, node_t *u, node_t *v) // u와 v의 부모를 바꿈
