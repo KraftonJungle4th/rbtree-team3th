@@ -21,7 +21,6 @@ rbtree *new_rbtree(void)
 
 void postorder(node_t *p, rbtree *t)
 {
-	
     if (p != t->nil)
     {
         postorder(p->left, t);
@@ -32,7 +31,6 @@ void postorder(node_t *p, rbtree *t)
 
 void delete_rbtree(rbtree *t)
 {
-    // TODO: reclaim the tree nodes's memory
     node_t *x = t->root;
     postorder(x, t);
 	free(t->nil);
@@ -88,17 +86,17 @@ void rbtree_insert_fixup(rbtree *t, node_t *z)
                 y->color = RBTREE_BLACK;
                 z->parent->parent->color = RBTREE_RED;
                 z = z->parent->parent;
-                continue;
             }
-
-            if (z == z->parent->right)
-            {
-                z = z->parent;
-                left_rotate(t, z); // p.319 경우(1,2,3) 그림 참고
+            else{
+                if (z == z->parent->right)
+                {
+                    z = z->parent;
+                    left_rotate(t, z); // p.319 경우(1,2,3) 그림 참고
+                }
+                z->parent->color = RBTREE_BLACK;
+                z->parent->parent->color = RBTREE_RED;
+                right_rotate(t, z->parent->parent);
             }
-            z->parent->color = RBTREE_BLACK;
-            z->parent->parent->color = RBTREE_RED;
-            right_rotate(t, z->parent->parent);
         }
         else
         {
@@ -109,16 +107,17 @@ void rbtree_insert_fixup(rbtree *t, node_t *z)
                 y->color = RBTREE_BLACK;
                 z->parent->parent->color = RBTREE_RED;
                 z = z->parent->parent;
-                continue;
             }
-            if (z->color == z->parent->left->color)
-            {
-                z = z->parent;
-                right_rotate(t, z);
+            else{
+                if (z->color == z->parent->left->color)
+                {
+                    z = z->parent;
+                    right_rotate(t, z);
+                }
+                z->parent->color = RBTREE_BLACK;
+                z->parent->parent->color = RBTREE_RED;
+                left_rotate(t, z->parent->parent);
             }
-            z->parent->color = RBTREE_BLACK;
-            z->parent->parent->color = RBTREE_RED;
-            left_rotate(t, z->parent->parent);
         }
     }
 
@@ -203,9 +202,8 @@ node_t *subtree_min(const rbtree *t, node_t *right) // 오른쪽 서브트리에
 
 int rbtree_erase(rbtree *t, node_t *p)
 {
-    node_t *y = NULL;
+    node_t *y = p;
     node_t *x = NULL;
-    y = p;
     color_t y_ori_color = y->color;
 
     if (p->left == t->nil)
@@ -222,7 +220,7 @@ int rbtree_erase(rbtree *t, node_t *p)
     {
         y = subtree_min(t, p->right);
         y_ori_color = y->color;
-        x = y->right;
+        x = y->right;    // 최종적으로 null 또는 p->right를 가리킴
         if (y->parent == p)
             x->parent = y;
         else
@@ -246,69 +244,67 @@ int rbtree_erase(rbtree *t, node_t *p)
 
 void rbtree_erase_fixup(rbtree *t, node_t *x)
 {
-    node_t *w = NULL;
+    node_t *s = NULL; // x의 형제 노드
     while (x != t->root && x->color == RBTREE_BLACK)
     {
-        if (x == x->parent->left)
+        if (x == x->parent->left) // x가 부모의 왼쪽 자식일 때
         {
-            w = x->parent->right;
-            if (w->color == RBTREE_RED)
+            s = x->parent->right;
+            if (s->color == RBTREE_RED)
             {
-                w->color = RBTREE_BLACK;
+                s->color = RBTREE_BLACK;
                 x->parent->color = RBTREE_RED;
                 left_rotate(t, x->parent);
-                w = x->parent->right;
-				continue;
+                s = x->parent->right;
+                continue;
             }
-            if (w->left->color == RBTREE_BLACK && w->right->color == RBTREE_BLACK)
+            if (s->left->color == RBTREE_BLACK && s->right->color == RBTREE_BLACK)
             {
-                w->color = RBTREE_RED;
+                s->color = RBTREE_RED;
                 x = x->parent;
-				continue;
             }
             else {
-				if (w->right->color == RBTREE_BLACK)
+				if (s->right->color == RBTREE_BLACK)
 				{
-					w->left->color = RBTREE_BLACK;
-					w->color = RBTREE_RED;
-					right_rotate(t, w);
-					w = x->parent->right;
+					s->left->color = RBTREE_BLACK;
+					s->color = RBTREE_RED;
+					right_rotate(t, s);
+					s = x->parent->right;
 				}
-				w->color = x->parent->color;
+				s->color = x->parent->color;
 				x->parent->color = RBTREE_BLACK;
-				w->right->color = RBTREE_BLACK;
+				s->right->color = RBTREE_BLACK;
 				left_rotate(t, x->parent);
 				x = t->root;
 			}
         }
-        else
+        else  // x가 부모의 오른쪽 자식일 때
         {
-            w = x->parent->left;
-            if (w->color == RBTREE_RED)
+            s = x->parent->left;
+            if (s->color == RBTREE_RED)
             {
-                w->color = RBTREE_BLACK;
+                s->color = RBTREE_BLACK;
                 x->parent->color = RBTREE_RED;
                 right_rotate(t, x->parent);
-                w = x->parent->right;
-				continue;
+                s = x->parent->right;
+                continue;
             }
-            if (w->right->color == RBTREE_BLACK && w->left->color == RBTREE_BLACK)
+            if (s->right->color == RBTREE_BLACK && s->left->color == RBTREE_BLACK)
             {
-                w->color = RBTREE_RED;
+                s->color = RBTREE_RED;
                 x = x->parent;
-				continue;
             }
             else {
-				if (w->left->color == RBTREE_BLACK)
+				if (s->left->color == RBTREE_BLACK)
 				{
-					w->right->color = RBTREE_BLACK;
-					w->color = RBTREE_RED;
-					left_rotate(t, w);
-					w = x->parent->left;
+					s->right->color = RBTREE_BLACK;
+					s->color = RBTREE_RED;
+					left_rotate(t, s);
+					s = x->parent->left;
 				}
-				w->color = x->parent->color;
+				s->color = x->parent->color;
 				x->parent->color = RBTREE_BLACK;
-				w->left->color = RBTREE_BLACK;
+				s->left->color = RBTREE_BLACK;
 				right_rotate(t, x->parent);
 				x = t->root;
 			}
